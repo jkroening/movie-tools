@@ -10,7 +10,7 @@ cj.load()
 browser = RoboBrowser(session=session)
 ## DVD Queue
 browser.open('http://dvd.netflix.com/Queue?prioritized=true&qtype=DD', cookies = cj)
-pdb.set_trace()
+
 # get the form
 queue_form = browser.get_form(class_='hasAwaitingRelease')
 queue_submit = queue_form.submit_fields['updateQueue2']
@@ -25,12 +25,12 @@ for key in queue_form.keys():
     spans = browser.find_all("input", {"name" : key })[0].findAllNext("span")
     for s in spans:
         if s is not None:
-            for c in s['class']:
-                if 'sbmf-' in c:
-                    predicted_rating = c.strip("sbmf-")
-                    if key not in (item[0] for item in predictions):
-                        predictions.append((key, predicted_rating))
-
+            for k in s.findChildren():
+                for c in k['class']:
+                    if 'sbmf-' in c:
+                        predicted_rating = c.strip("sbmf-")
+                        if key not in (item[0] for item in predictions):
+                            predictions.append((key, predicted_rating))
 sorted_preds = sorted(predictions, key=lambda x: float(x[1]), reverse=True)
 
 # for i in xrange(len(sorted_preds)):
@@ -53,7 +53,6 @@ with open("qbody", "w") as f:
 
 ## use this code to go section by section if there are too many updates and it breaks netflix form
 qtbls = form.find_all('table', {"class" : "qtbl"})
-pdb.set_trace()
-# for i, q in enumerate(qtbls[:-1]):
-#     with open("qtbl{}".format(i + 1), "w") as f:
-#         f.write(q.prettify("utf-8"))
+for i, q in enumerate(qtbls[:-1]):
+    with open("qtbl{}".format(i + 1), "w") as f:
+        f.write(q.prettify("utf-8"))
