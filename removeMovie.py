@@ -1,12 +1,16 @@
 import sys
+import shutil
 import json
 import pandas as pd
 import numpy as np
 import pdb
 
-with open("movies_db.json", "r") as f:
+with open("databases/movies_db.json", "r") as f:
     movies_in = json.load(f)
     movies_db = pd.DataFrame(movies_in)
+
+## backup database
+shutil.copyfile('databases/movies_db.json', 'databases/backup/movies_db.json')
 
 ## remove by title
 in_one = raw_input("What's the name of the movie to remove? ")
@@ -31,7 +35,7 @@ in_three = raw_input("\nThis one? (y or n) ")
 
 if in_three == 'y' and isinstance(in_two, int):
     movies_db = movies_db.loc[movies_db.index != in_two, ]
-    with open('movies_db.json', 'w') as outfile:
+    with open('databases/movies_db.json', 'w') as outfile:
         json.dump(movies_db.T.to_dict().values(), outfile)
 else:
     print("\nOK. Try again.")
