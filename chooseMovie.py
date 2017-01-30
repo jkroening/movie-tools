@@ -229,9 +229,9 @@ def processMovies(soup, movies_db):
             netflix_instant = True
         else:
             netflix_instant = False
-            rating = float([s for s in m if tryFloat(s)][1].encode('utf-8'))
-            netflix_id = int(mov.get('data-movie-id'))
-            ## update rating and streams if already in the database, then skip to next movie
+        rating = float([s for s in m if tryFloat(s)][1].encode('utf-8'))
+        netflix_id = int(mov.get('data-movie-id'))
+        ## update rating and streams if already in the database, then skip to next movie
         if not movies_db.empty:
             cond1 = any(float(netflix_id) == movies_db.netflix_id.values)
             cond2 = any(int(netflix_id) == movies_db.netflix_id.values)
@@ -244,11 +244,17 @@ def processMovies(soup, movies_db):
                     idx = movies_db[movies_db.netflix_id == netflix_id].index[0]
                     movies_db.loc[idx, 'rating'] = rating
                     movies_db.loc[idx, 'netflix_instant'] = netflix_instant
+                    prev_streams = movies_db.loc[idx, 'streams']
+                    if netflix_instant and 'Netflix Instant' not in prev_streams:
+                        prev_streams.append(str('Netflix Instant'))
+                    movies_db = movies_db.set_value(idx, 'streams', prev_streams)
                     cisi_id = movies_db.loc[idx, 'canistreamit_id']
                     if update_streams and cisi_id is not None:
-                        prev_streams = movies_db.loc[idx, 'streams']
                         new_streams = getStreams(cisi_id)
-                        movies_db = movies_db.set_value(idx, 'streams', prev_streams.append(new_streams))
+                        all_streams = prev_streams.append(new_streams)
+                        if all_streams is None:
+                            all_streams = []
+                        movies_db = movies_db.set_value(idx, 'streams', all_streams)
                 continue
         if mov.find('div', {'class' : 'maskRated'}) is not None:
             print("Skipping '{}' because it has already been watched and rated.".format(title))
@@ -278,6 +284,10 @@ def processMovies(soup, movies_db):
         ## get year, prefer CISI
         year = cisi_year if cisi_year is not None else tmdb_year
 
+        ## just to be sure
+        if ss is None:
+            ss = []
+
         movies.append({
             'netflix_id' : netflix_id
             , 'tmdb_id' : tmdb_id
@@ -295,6 +305,7 @@ def processMovies(soup, movies_db):
         })
         with open('new_movies.json', 'w') as outfile:
             json.dump(movies, outfile)
+
     return movies, movies_db
 
 def tryFloat(x):
