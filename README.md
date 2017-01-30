@@ -1,10 +1,8 @@
 # netflix-queue-sorter
-Python script to sort Netflix DVD and Instant (My List) queues
+A Python script for choosing a movie from your Netflix DVD and Instant (My List) queues.
 
-This script takes a Netflix DVD or Instant queue in the form of html and sorts it by predicted rating.
+This sortDVDqueue.py and sortInstantqueue.py scripts are deprecated. Now use chooseMovie.py to add movies to your database and to select a movie and use removeMovie.py to remove a movie from your database after you've watched it.
 
-It currently returns html chunks for copying and pasting back into browser html code for updating the queue.
+chooseMovie.py is a command line interface that gives you the ability to filter your queue by up to 2 genres and the displayed results are sorted by your predicted rating on Netflix. The script also searches online streaming services and displays which services you might be able to stream the movie on, if any.
 
-Future implementation (using either RoboBrowser or Selenium) will update the form automatically.
-
-Authorization is accomplished using a cookies.txt file with from a logged in session because Netflix does not provide a stable API for such tasks.
+Input requires copy and pasting an html block from the netflix site into a file called queue_body.html. Please refer to the header section of chooseMovie.py for implementation details.
