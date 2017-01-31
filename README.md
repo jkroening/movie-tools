@@ -3,6 +3,13 @@ A Python script for choosing a movie from your Netflix DVD and Instant (My List)
 
 This sortDVDqueue.py and sortInstantqueue.py scripts are deprecated. Now use chooseMovie.py to add movies to your database and to select a movie and use removeMovie.py to remove a movie from your database after you've watched it.
 
-chooseMovie.py is a command line interface that gives you the ability to filter your queue by up to 2 genres and the displayed results are sorted by your predicted rating on Netflix. The script also searches online streaming services and displays which services you might be able to stream the movie on, if any.
+chooseMovie.py is a command line interface that gives you the ability to filter your queue by up to 2 genres and the displayed results are sorted by your predicted rating on Netflix, displaying on which streaming services the movie might be available.
+
+addMovies.py processes your Netflix queue (by reading input HTML files you create) and adds those movies to your database with their streaming availability across multiple services: Netflix, Hulu Plus, Amazon Prime, Crackle, Epix, ...
 
 Input requires copy and pasting an html block from the netflix site into a file called queue_body.html. Please refer to the header section of chooseMovie.py for implementation details.
+
+Other requirements include:
+  - a configuration file located in config/config.csv containing an API key for The Movie Database (see config/config_EXAMPLE.csv)
+  - a JSON database skeleton with schema as laid out in databases/movies_db_EXAMPLE.json
+  - input HTML files for your DVD queue, Saved Movies queue, and My List (streaming queue) -- see comments in addMovies.py
