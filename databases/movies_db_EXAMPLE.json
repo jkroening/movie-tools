@@ -1,0 +1,45 @@
+[
+    {
+        "netflix_instant": 1.0,
+        "genres": [
+            "Action",
+            "Crime",
+            "Thriller",
+            "Foreign"
+        ],
+        "runtime": 111.0,
+        "tmdb_id": 269494.0,
+        "rating": 2.8,
+        "overview": "On the way to his mother's funeral, a detective accidentally hits a person with his car. He takes the body with him and puts it into his mother's coffin. The moment he feels relieved, he receives a call. This caller insists that he saw the detective's hit-and-run, but instead of asking for money, he wants to know about the body's whereabouts, leading to a do-or-die showdown of the witness and detective.",
+        "title": "A Hard Day",
+        "year": 2015.0,
+        "imdb_id": "tt3697626",
+        "netflix_id": 80013285.0,
+        "streams": [
+            "Netflix Instant"
+        ],
+        "tagline": "",
+        "canistreamit_id": "5584c517a3f5ec0f06edf5a5"
+    },
+    {
+        "netflix_instant": 1.0,
+        "genres": [
+            "Drama",
+            "Foreign"
+        ],
+        "runtime": 91.0,
+        "tmdb_id": 270400.0,
+        "rating": 2.7,
+        "overview": "Charlie, a 17-year-old girl tortured by doubt, is thrilled when she becomes friends with Sarah, but when Sarah tires of Charlie and looks for a new friend, their relationship takes an ominous turn.",
+        "title": "Breathe",
+        "year": 2015.0,
+        "imdb_id": "tt3365778",
+        "netflix_id": 80013289.0,
+        "streams": [
+            "Amazon Prime Instant",
+            "Netflix Instant"
+        ],
+        "tagline": "",
+        "canistreamit_id": "55defbd2a3f5ec993fedf5a6"
+    }
+]
