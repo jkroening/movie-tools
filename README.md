@@ -7,6 +7,8 @@ chooseMovie.py is a command line interface that gives you the ability to filter 
 
 addMovies.py processes your Netflix queue (by reading input HTML files you create) and adds those movies to your database with their streaming availability across multiple services: Netflix, Hulu Plus, Amazon Prime, Crackle, Epix, ...
 
+removeMovie.py removes a specified movie from your JSON database. (You'll probably want to do this once you watch it.)
+
 Input requires copy and pasting an html block from the netflix site into a file called queue_body.html. Please refer to the header section of chooseMovie.py for implementation details.
 
 Other requirements include:
