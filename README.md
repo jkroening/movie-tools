@@ -1,10 +1,17 @@
 # netflix-queue-sorter
-Python script to sort Netflix DVD and Instant (My List) queues
+A Python script for choosing a movie from your Netflix DVD and Instant (My List) queues.
 
-This script takes a Netflix DVD or Instant queue in the form of html and sorts it by predicted rating.
+This sortDVDqueue.py and sortInstantqueue.py scripts are deprecated. Now use chooseMovie.py to add movies to your database and to select a movie and use removeMovie.py to remove a movie from your database after you've watched it.
 
-It currently returns html chunks for copying and pasting back into browser html code for updating the queue.
+chooseMovie.py is a command line interface that gives you the ability to filter your queue by up to 2 genres and the displayed results are sorted by your predicted rating on Netflix, displaying on which streaming services the movie might be available.
 
-Future implementation (using either RoboBrowser or Selenium) will update the form automatically.
+addMovies.py processes your Netflix queue (by reading input HTML files you create) and adds those movies to your database with their streaming availability across multiple services: Netflix, Hulu Plus, Amazon Prime, Crackle, Epix, ...
 
-Authorization is accomplished using a cookies.txt file with from a logged in session because Netflix does not provide a stable API for such tasks.
+removeMovie.py removes a specified movie from your JSON database. (You'll probably want to do this once you watch it.)
+
+Input requires copy and pasting an html block from the netflix site into a file called queue_body.html. Please refer to the header section of chooseMovie.py for implementation details.
+
+Other requirements include:
+  - a configuration file located in config/config.csv containing an API key for The Movie Database (see config/config_EXAMPLE.csv)
+  - a JSON database skeleton with schema as laid out in databases/movies_db_EXAMPLE.json
+  - input HTML files for your DVD queue, Saved Movies queue, and My List (streaming queue) -- see comments in addMovies.py
