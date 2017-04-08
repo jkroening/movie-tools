@@ -328,25 +328,33 @@ def processMyList(soup, movies_db):
         ## netflix block
         title = unidecode(m[0]).strip()
         netflix_instant = True
-        spans = mov.findNext('div').find_all('span', {'class', 'star'})
-        sbplaceholder = [i for i, item in enumerate(spans) if re.search('sb-placeholder', item['class'][1])]
-        if len(sbplaceholder):
-            base = sbplaceholder[0] - 1
+        spans = mov.findNext('div').find_all('span', {'class', 'match-score'})
+        if len(spans) < 1:
+            rating = None
         else:
-            base = 5.0
-        percent = [s for s in spans if re.search('percent', s['class'][2])]
-        if len(percent):
-            decimal = float(filter(str.isdigit, str([s for s in spans if re.search('percent', s['class'][2])][0]['class'][2]))) / 100
-        else:
-            decimal = 0
-        rating = base + decimal
+            rating = float(spans[0].text.split("% ")[0])
+        ## old code from before Netflix changed streaming from star ratings to match percentages
+        # spans = mov.findNext('div').find_all('span', {'class', 'star'})
+        # sbplaceholder = [i for i, item in enumerate(spans) if re.search('sb-placeholder', item['class'][1])]
+        # if len(sbplaceholder):
+        #     base = sbplaceholder[0] - 1
+        # else:
+        #     base = 5.0
+        # percent = [s for s in spans if re.search('percent', s['class'][2])]
+        # if len(percent):
+        #     decimal = float(filter(str.isdigit, str([s for s in spans if re.search('percent', s['class'][2])][0]['class'][2]))) / 100
+        # else:
+        #     decimal = 0
+        # rating = base + decimal
         netflix_id = int(mov.find('a')['href'].split('/')[-1])
-        ## update netflix instant stream status if already in the database, then skip to next movie
+        ## update netflix instant stream status and rating if already in the database, then skip to next movie
         if not movies_db.empty:
             cond1 = any(float(netflix_id) == movies_db.netflix_id.values)
             cond2 = any(int(netflix_id) == movies_db.netflix_id.values)
             if cond1 or cond2:
                 idx = movies_db[movies_db.netflix_id == netflix_id].index[0]
+                if rating is not None:
+                    movies_db.loc[idx, 'rating'] = rating
                 movies_db.loc[idx, 'netflix_instant'] = netflix_instant
                 prev_streams = movies_db.loc[idx, 'streams']
                 if netflix_instant and 'Netflix Instant' not in prev_streams:
@@ -383,6 +391,11 @@ def processMyList(soup, movies_db):
         ## just to be sure
         if ss is None:
             ss = []
+
+        if 'Comedy' in gs:
+            user_in = raw_input("\nAdd 'Stand-Up' to genres? [y or n]")
+            if user_in == 'y':
+                gs.append('Stand-Up')
 
         movies.append({
             'netflix_id' : netflix_id

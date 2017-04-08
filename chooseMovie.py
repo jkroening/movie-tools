@@ -64,6 +64,7 @@ sorted_movies = []
 while len(sorted_movies) == 0:
     print("\nOf the following genres...\n{}".format([str(g) for g in complete_genres]))
     genre_in = raw_input("Which genre(s) do you want to watch? (Enter up to 2, separated by a comma; or 'All'): ")
+
     out_movies.rating = [round(o, 1) for o in out_movies.rating.values]
     if genre_in.lower() == 'all':
         sorted_movies = out_movies.sort_values(['rating'], ascending = 0)
