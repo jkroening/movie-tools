@@ -36,6 +36,11 @@ import argparse
 import pdb
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--streaming", help = "only display movies that are available to stream",
+                    action = "store_true")
+args = parser.parse_args()
+
 ## load database
 try:
     with open("databases/movies_db.json", "r") as f:
@@ -56,7 +61,17 @@ except:
         , 'year' : []
         , 'overview' : []
         , 'tagline' : []
+        , 'rt_score' : []
     })
+
+## whether canistream.it should be checked for existing DB entries to update streams
+if args.streaming:
+    streaming = True
+    ## subset out_movies
+    out_movies = out_movies.loc[[True if x != [] else False for x in out_movies.streams.values], ]
+else:
+    streaming = False
+    print("To show only the movies that are available to stream, enter '--streaming' as a command line argument.\n")
 
 complete_genres = np.unique([x for y in out_movies.genres.values for x in y]).tolist()
 
@@ -65,9 +80,9 @@ while len(sorted_movies) == 0:
     print("\nOf the following genres...\n{}".format([str(g) for g in complete_genres]))
     genre_in = raw_input("Which genre(s) do you want to watch? (Enter up to 2, separated by a comma; or 'All'): ")
 
-    out_movies.rating = [round(o, 1) for o in out_movies.rating.values]
+    out_movies.rating = [round(o, 1) if isinstance(o, float) else np.nan for o in out_movies.rating.values]
     if genre_in.lower() == 'all':
-        sorted_movies = out_movies.sort_values(['rating'], ascending = 0)
+        sorted_movies = out_movies.sort_values(['rating', 'rt_score'], ascending = [False, False])
     else:
         genres_in = [g.strip() for g in genre_in.split(",")]
 
@@ -79,23 +94,28 @@ while len(sorted_movies) == 0:
             genre_idx = genre1_idx
 
         movies_genred = out_movies.loc[genre_idx, ]
-        sorted_movies = movies_genred.sort_values(['rating'], ascending = 0)
+        sorted_movies = movies_genred.sort_values(['rating', 'rt_score'], ascending = [False, False])
 
-    print("\n{}\n".format(sorted_movies[['title', 'rating', 'year', 'runtime', 'genres', 'streams', 'tagline']].to_string()))
+    print("\n{}\n".format(sorted_movies[['title', 'rating', 'rt_score', 'year', 'runtime', 'genres', 'streams', 'tagline']].to_string()))
 
 while True:
     user_in = raw_input("Enter the row index number of movie you want to know more about: (or q to quit)  ")
     if user_in.lower() == 'q':
         break
     tl = sorted_movies.ix[int(user_in), 'tagline']
-    if not len(tl): tl = 'No tagline.'
+    if tl is None or not len(tl): tl = 'No tagline.'
+    runtime = sorted_movies.ix[int(user_in), 'runtime']
+    if runtime is None or str(runtime) == "NaN": runtime = "???"
     streams = sorted_movies.ix[int(user_in), 'streams']
     if not len(streams): streams = 'Not available to stream.'
+    rt_score = sorted_movies.ix[int(user_in), 'rt_score']
+    if rt_score != 'NaN': rt_score = int(rt_score)
     print("\n{}".format(sorted_movies.ix[int(user_in), 'title']))
     print("\n{}".format(tl))
     print("\n{}".format(sorted_movies.ix[int(user_in), 'overview']))
     print("\n{}".format(int(sorted_movies.ix[int(user_in), 'year'])))
-    print("\n{} mins".format(int(sorted_movies.ix[int(user_in), 'runtime'])))
+    print("\n{} mins".format(runtime))
     print("\n{} stars".format(round(sorted_movies.ix[int(user_in), 'rating'], 1)))
+    print("\n{}%").format(rt_score)
     print("\n{}".format(sorted_movies.ix[int(user_in), 'genres']))
     print("\n{}\n".format(streams))
