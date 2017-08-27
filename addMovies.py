@@ -513,7 +513,7 @@ def processMovies(soup, movies_db, update = False):
                 if g not in gs:
                     gs.append(g)
         if 'Comedy' in gs:
-            user_in = raw_input("\nAdd 'Stand-Up' to genres of {}? [y or n] ".format(title))
+            user_in = raw_input("\nIs {} in the 'Stand-Up' genre? [y or n] ".format(title))
             if user_in == 'y':
                 gs.append('Stand-Up')
         ## just to be sure
@@ -669,7 +669,7 @@ def processMyList(soup, movies_db, update = False):
                 if g not in gs:
                     gs.append(g)
         if 'Comedy' in gs:
-            user_in = raw_input("\nAdd 'Stand-Up' to genres? [y or n] ")
+            user_in = raw_input("\nIs {} in the 'Stand-Up' genre? [y or n] ".format(title))
             if user_in == 'y':
                 gs.append('Stand-Up')
         ## just to be sure
