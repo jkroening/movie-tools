@@ -579,6 +579,7 @@ def processMyList(soup, movies_db, update = False):
         # else:
         #     decimal = 0
         # rating = base + decimal
+        rating = None
         netflix_id = int(mov.find('a')['href'].split('/')[-1])
         ## update netflix instant stream status and rating if already in the database, then skip to next movie
         if not movies_db.empty:
@@ -622,7 +623,8 @@ def processMyList(soup, movies_db, update = False):
             continue
 
         if rating is None:
-            rating = float(user_input("What is your predicted Netflix rating for '{}'? ".format(title)))
+            rate = raw_input("What is your predicted Netflix rating for '{}'? ".format(title))
+            rating = float(rate)
 
         cisi_id, jw_year, tmdb_year, jw_runtime, tmdb_runtime, tmdb_id, jw_id, rt_score = (np.nan,) * 8
         imdb_id, overview, tagline, tmdb_title, jw_title = (None,) * 5
