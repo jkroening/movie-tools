@@ -31,7 +31,7 @@ def findPlays(soup, lst = []):
         m = [m for m in mov.strings]
         m = [x.replace(',', '') for x in m]
         if 'Play' in m:
-            lst.append(unidecode(m[1]).strip())
+            lst.append(unidecode(m[1]).replace("&", "and").strip())
     return(lst)
 
 def getMyListTitles(soup, lst = []):
@@ -41,7 +41,7 @@ def getMyListTitles(soup, lst = []):
             continue
         m = [m for m in mov.strings]
         m = [x.replace(',', '') for x in m]
-        for s in unidecode(m[0]).strip().split(": "):
+        for s in unidecode(m[0]).replace("&", "and").strip().split(": "):
             lst.append(s.strip().lower())
     return(lst)
 
