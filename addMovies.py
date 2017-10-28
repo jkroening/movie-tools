@@ -484,7 +484,7 @@ def processMovies(soup, movies_db, update = False):
 
         ## get year, prefer JustWatch
         year = jw_year if not np.isnan(jw_year) else tmdb_year
-        if np.isnan(year):
+        if not isinstance(year, float) or np.isnan(year):
             if mov.findNext('div', {'class', 'year'}) is not None:
                 year = float(mov.findNext('div', {'class', 'year'}).text)
 
