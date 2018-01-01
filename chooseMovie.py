@@ -71,14 +71,14 @@ if args.streaming:
     out_movies = out_movies.loc[[True if x != [] else False for x in out_movies.streams.values], ]
 else:
     streaming = False
-    print("To show only the movies that are available to stream, enter '--streaming' as a command line argument.\n")
+    print("To show only the movies that are available to stream, enter '--streaming' as a command line argument.")
 
 complete_genres = np.unique([x for y in out_movies.genres.values for x in y]).tolist()
 
 sorted_movies = []
 while len(sorted_movies) == 0:
     print("\nOf the following genres...\n{}".format([str(g) for g in complete_genres]))
-    genre_in = raw_input("Which genre(s) do you want to watch? (Enter up to 2, separated by a comma; or 'All'): ")
+    genre_in = raw_input("Which genre(s) do you want to watch? (Enter up to 2, separated by a comma, with '-' in front to exclude; or 'All'): ")
 
     out_movies.rating = [round(o, 1) if isinstance(o, float) else np.nan for o in out_movies.rating.values]
     if genre_in.lower() == 'all':
@@ -86,11 +86,24 @@ while len(sorted_movies) == 0:
     else:
         genres_in = [g.strip() for g in genre_in.split(",")]
 
-        genre1_idx = [True if genres_in[0].lower() in k else False for k in [[j.lower() for j in i] for i in out_movies.genres.values]]
         if len(genres_in) > 1:
-            genre2_idx = [True if genres_in[1].lower() in k else False for k in [[j.lower() for j in i] for i in out_movies.genres.values]]
+            if genres_in[0][0] == "-":
+                genres_in[0] = genres_in[0][1:]
+                genre1_idx = [False if genres_in[0].lower() in k else True for k in [[j.lower() for j in i] for i in out_movies.genres.values]]
+            else:
+                genre1_idx = [True if genres_in[0].lower() in k else False for k in [[j.lower() for j in i] for i in out_movies.genres.values]]
+            if genres_in[1][0] == "-":
+                genres_in[1] = genres_in[1][1:]
+                genre2_idx = [False if genres_in[1].lower() in k else True for k in [[j.lower() for j in i] for i in out_movies.genres.values]]
+            else:
+                genre2_idx = [True if genres_in[1].lower() in k else False for k in [[j.lower() for j in i] for i in out_movies.genres.values]]
             genre_idx = np.array(genre1_idx) * np.array(genre2_idx)
         else:
+            if genres_in[0][0] == "-":
+                genres_in[0] = genres_in[0][1:]
+                genre1_idx = [False if genres_in[0].lower() in k else True for k in [[j.lower() for j in i] for i in out_movies.genres.values]]
+            else:
+                genre1_idx = [True if genres_in[0].lower() in k else False for k in [[j.lower() for j in i] for i in out_movies.genres.values]]
             genre_idx = genre1_idx
 
         movies_genred = out_movies.loc[genre_idx, ]
