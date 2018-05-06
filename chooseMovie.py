@@ -48,20 +48,22 @@ try:
         out_movies = pd.DataFrame(movies_in)
 except:
     out_movies = pd.DataFrame({
-        'netflix_id' : []
-        , 'rating' : []
-        , 'title' : []
-        , 'canistreamit_id' : []
-        , 'tmdb_id' : []
-        , 'imdb_id' : []
-        , 'genres' : []
-        , 'streams' : []
-        , 'netflix_instant' : []
-        , 'runtime' : []
-        , 'year' : []
-        , 'overview' : []
-        , 'tagline' : []
-        , 'rt_score' : []
+            'netflix_id' : []
+            , 'tmdb_id' : []
+            , 'canistreamit_id' : []
+            , 'imdb_id' : []
+            , 'title' : []
+            , 'rating' : []
+            , 'genres' : []
+            , 'netflix_instant' : []
+            , 'streams' : []
+            , 'year' : []
+            , 'runtime' : []
+            , 'overview' : []
+            , 'tagline' : []
+            , 'jw_id' : []
+            , 'rt_score' : []
+            , 'queue' : []
     })
 
 ## whether canistream.it should be checked for existing DB entries to update streams
@@ -109,7 +111,7 @@ while len(sorted_movies) == 0:
         movies_genred = out_movies.loc[genre_idx, ]
         sorted_movies = movies_genred.sort_values(['rating', 'rt_score'], ascending = [False, False])
 
-    print("\n{}\n".format(sorted_movies[['title', 'rating', 'rt_score', 'year', 'runtime', 'genres', 'streams', 'tagline']].to_string()))
+    print("\n{}\n".format(sorted_movies[['title', 'rating', 'rt_score', 'year', 'runtime', 'genres', 'streams', 'queue', 'tagline']].to_string()))
 
 while True:
     user_in = raw_input("Enter the row index number of movie you want to know more about: (or q to quit)  ")
@@ -132,3 +134,4 @@ while True:
     print("\n{}%").format(rt_score)
     print("\n{}".format(sorted_movies.ix[int(user_in), 'genres']))
     print("\n{}\n".format(streams))
+    print("\n{}\n".format(queue))

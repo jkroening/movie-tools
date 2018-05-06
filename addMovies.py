@@ -221,6 +221,7 @@ def findTMDB(title, imdb_id = None):
         tmdb_title = None
     else:
         print("* MATCHED TMDB")
+    print("\n")
     return tmdb_id, year, overview, tagline, runtime, gs, imdb_id, tmdb_title
 
 
@@ -403,70 +404,118 @@ def getJustWatch(title, jw_id, rt_score, streams, gs):
     return jw_id, rt_score, streams, gs
 
 
-def processMovies(soup, movies_db, update = False):
+def process(soup, cls, movies_db, mode = 'queue', queue = 'Queue'):
+    if mode not in ['queue', 'list', 'gallery']:
+        sys.exit("mode parameter must be one of 'queue', 'list', or 'gallery'")
+
     movies = []
-    for mov in soup.find_all('div', {'class' : 'queue-item'}):
+    for mov in soup.find_all('div', {'class', cls}):
+        ## skip if TV show
+        if mode == 'list' and 'Season' in mov.findNext('span', {'class', 'duration'}).text:
+            continue
+
         m = [m for m in mov.strings]
         m = [x.replace(',', '') for x in m]
 
-        ## netflix block
-        title = unidecode(m[1]).strip()
-        print title
+        if mode == 'queue':
+            title = unidecode(m[1]).strip()
+            print(title)
+        else:
+            title = unidecode(m[0]).strip()
+            print(title)
+
         if 'future release' in m or 'Future release' in m:
             print("Skipping '{}' because it's a Future release.".format(title))
             continue
         if 'Play' in m:
             netflix_instant = True
+        elif mode in ['list', 'gallery']:
+            netflix_instant = True
         else:
             netflix_instant = False
-        rating = float([s for s in m if tryFloat(s)][1].encode('utf-8'))
-        netflix_id = int(mov.get('data-movie-id'))
-        ## update rating and streams if already in the database, then skip to next movie
+
+        ## section if you want to use the new netflix percentage match-score
+        nextdiv = mov.findNext('div')
+        if nextdiv is not None:
+            spans = mov.findNext('div').find_all('span', {'class', 'match-score'})
+        else:
+            spans = []
+        if len(spans) < 1:
+            pct_rating = np.nan
+        else:
+            pct_rating = spans[0].text.split("% ")[0]
+            if 'New' in pct_rating:
+                pct_rating = np.nan
+            else:
+                pct_rating = round(float(pct_rating) / 20.0, 1)
+        ## old code from before Netflix changed streaming from star ratings to match percentages
+        # spans = mov.findNext('div').find_all('span', {'class', 'star'})
+        # sbplaceholder = [i for i, item in enumerate(spans) if re.search('sb-placeholder', item['class'][1])]
+        # if len(sbplaceholder):
+        #     base = sbplaceholder[0] - 1
+        # else:
+        #     base = 5.0
+        # percent = [s for s in spans if re.search('percent', s['class'][2])]
+        # if len(percent):
+        # decimal = float(filter(
+        #     str.isdigit, str([s for s in spans if re.search('percent', s['class'][2])][0]['class'][2])
+        # )) / 100
+        # else:
+        #     decimal = 0
+        # rating = base + decimal
+        if mode == 'queue':
+            rating = float([s for s in m if tryFloat(s)][1].encode('utf-8'))
+            netflix_id = int(mov.get('data-movie-id'))
+        elif mode == 'list':
+            rating = None
+            netflix_id = int(mov.find('a')['href'].split('/')[-1])
+        elif mode == 'gallery':
+            rating = None
+            netflix_id = int(mov.findPrevious('a')['href'].split('/')[-1].split('?')[0])
+
+        ## update ratings, queues, Netflix streams if already in the database, then skip to next movie
         if not movies_db.empty:
             cond1 = any(float(netflix_id) == movies_db.netflix_id.values)
             cond2 = any(int(netflix_id) == movies_db.netflix_id.values)
             if cond1 or cond2:
+                idx = movies_db[movies_db.netflix_id == netflix_id].index[0]
+                ## update which Queue the movie is in
+                queues = movies_db.loc[idx, 'queue']
+                queues.append(queue)
+                movies_db.set_value(idx, 'queue', queues)
                 ## if movie has already been rated, remove from DB, assume it's been watched
-                if mov.find('div', {'class' : 'maskRated'}) is not None:
+                if mode == 'queue' and mov.find('div', {'class' : 'maskRated'}) is not None:
                     movies_db = movies.db[movies_db.netflix_id != int(netflix_id)]
                     print("Skipping '{}' because it has already been watched and rated.".format(title))
                 else:
-                    idx = movies_db[movies_db.netflix_id == netflix_id].index[0]
-                    movies_db.loc[idx, 'rating'] = rating
+                    if rating is None:
+                        rating = tryFloat(movies_db.loc[idx, 'rating'], get = True)
+                    if np.isnan(rating):
+                        movies_db.set_value(idx, 'rating', pct_rating)
+                    else:
+                        movies_db.loc[idx, 'rating'] = rating
                     movies_db.loc[idx, 'netflix_instant'] = netflix_instant
                     prev_streams = movies_db.loc[idx, 'streams']
                     if netflix_instant and 'Netflix' not in prev_streams:
                         prev_streams.append(str('Netflix'))
+                    if prev_streams is not None:
+                        prev_streams = list(set(prev_streams))
                     movies_db = movies_db.set_value(idx, 'streams', prev_streams)
-                    if update:
-                        jw_id = movies_db.loc[idx, "jw_id"]
-                        rt_score = movies_db.loc[idx, "rt_score"]
-                        prev_genres = movies_db.loc[idx, 'genres']
-                        if not not jw_id and isinstance(jw_id, float) and not np.isnan(jw_id):
-                            jw_id, rt_score, streams, gs = getJustWatch(title, jw_id, rt_score, prev_streams, prev_genres)
-                            movies_db.set_value(idx, 'jw_id', jw_id)
-                            if not np.isnan(rt_score):
-                                movies_db.set_value(idx, 'rt_score', rt_score)
-                            if any(streams):
-                                for s in streams:
-                                    if s not in prev_streams:
-                                        if s == "Netflix" and "Netflix" not in prev_streams:
-                                            prev_streams.append('Netflix')
-                                        else:
-                                            prev_streams.append(s)
-                                if prev_streams is None:
-                                    prev_streams = []
-                                prev_streams = [s for s in prev_streams if s in my_providers]
-                                movies_db.set_value(idx, 'streams', prev_streams)
                 continue
+
+        ## movie is not in the database but has already been watched and rated, skip
         if mov.find('div', {'class' : 'maskRated'}) is not None:
             print("Skipping '{}' because it has already been watched and rated.".format(title))
             continue
 
-        user_in = raw_input("\nAdd '{}' to the database? [y or n] ".format(title))
+        user_in = raw_input("Add '{}' to the database? [y or n] ".format(title))
         if user_in != 'y':
             print("Skipping...")
             continue
+
+        if rating is None:
+            rate = raw_input("What is your predicted Netflix rating for '{}'? ".format(title))
+            rating = tryFloat(rate, get = True)
 
         cisi_id, jw_year, tmdb_year, jw_runtime, tmdb_runtime, tmdb_id, jw_id, rt_score = (np.nan,) * 8
         imdb_id, overview, tagline, tmdb_title, jw_title = (None,) * 5
@@ -513,7 +562,7 @@ def processMovies(soup, movies_db, update = False):
                 if g not in gs:
                     gs.append(g)
         if 'Comedy' in gs:
-            user_in = raw_input("\nIs {} in the 'Stand-Up' genre? [y or n] ".format(title))
+            user_in = raw_input("Is {} in the 'Stand-Up' genre? [y or n] ".format(title))
             if user_in == 'y':
                 gs.append('Stand-Up')
         ## just to be sure
@@ -536,176 +585,25 @@ def processMovies(soup, movies_db, update = False):
             , 'tagline' : tagline
             , 'jw_id' : jw_id
             , 'rt_score' : rt_score
+            , 'queue' : queue
         })
         with open('new_movies.json', 'w') as outfile:
             json.dump(movies, outfile)
 
     return movies, movies_db
 
-def processMyList(soup, movies_db, update = False):
-    movies = []
-    for mov in soup.find_all('div', {'class' : 'title'}):
-        ## skip if TV show
-        if 'Season' in mov.findNext('span', {'class', 'duration'}).text:
-            continue
-
-        m = [m for m in mov.strings]
-        m = [x.replace(',', '') for x in m]
-
-        ## netflix block
-        title = unidecode(m[0]).strip()
-        print title
-        netflix_instant = True
-        ## section if you want to use the new netflix percentage match-score
-        spans = mov.findNext('div').find_all('span', {'class', 'match-score'})
-        if len(spans) < 1:
-            pct_rating = np.nan
-        else:
-            pct_rating = spans[0].text.split("% ")[0]
-            if 'New' in pct_rating:
-                pct_rating = np.nan
-            else:
-                pct_rating = round(float(pct_rating) / 20.0, 1)
-        ## old code from before Netflix changed streaming from star ratings to match percentages
-        # spans = mov.findNext('div').find_all('span', {'class', 'star'})
-        # sbplaceholder = [i for i, item in enumerate(spans) if re.search('sb-placeholder', item['class'][1])]
-        # if len(sbplaceholder):
-        #     base = sbplaceholder[0] - 1
-        # else:
-        #     base = 5.0
-        # percent = [s for s in spans if re.search('percent', s['class'][2])]
-        # if len(percent):
-        #     decimal = float(filter(str.isdigit, str([s for s in spans if re.search('percent', s['class'][2])][0]['class'][2]))) / 100
-        # else:
-        #     decimal = 0
-        # rating = base + decimal
-        rating = None
-        netflix_id = int(mov.find('a')['href'].split('/')[-1])
-        ## update netflix instant stream status and rating if already in the database, then skip to next movie
-        if not movies_db.empty:
-            cond1 = any(float(netflix_id) == movies_db.netflix_id.values)
-            cond2 = any(int(netflix_id) == movies_db.netflix_id.values)
-            if cond1 or cond2:
-                idx = movies_db[movies_db.netflix_id == netflix_id].index[0]
-                rating = movies_db.loc[idx, 'rating']
-                if np.isnan(rating):
-                    movies_db.set_value(idx, 'rating', pct_rating)
-                movies_db.loc[idx, 'netflix_instant'] = netflix_instant
-                prev_streams = movies_db.loc[idx, 'streams']
-                if netflix_instant and 'Netflix' not in prev_streams:
-                    prev_streams.append(str('Netflix'))
-                movies_db = movies_db.set_value(idx, 'streams', prev_streams)
-                if update:
-                    jw_id = movies_db.loc[idx, 'jw_id']
-                    rt_score = movies_db.loc[idx, 'rt_score']
-                    prev_genres = movies_db.loc[idx, 'genres']
-                    if not not jw_id and isinstance(jw_id, float) and not np.isnan(jw_id):
-                        jw_id, rt_score, streams, gs = getJustWatch(title, jw_id, rt_score, prev_streams, prev_genres)
-                        movies_db.set_value(idx, 'jw_id', jw_id)
-                        if not np.isnan(rt_score):
-                            movies_db.set_value(idx, 'rt_score', rt_score)
-                        if any(streams):
-                            for s in streams:
-                                if s not in prev_streams:
-                                    if s == "Netflix" and "Netflix" not in prev_streams:
-                                        prev_streams.append('Netflix')
-                                    else:
-                                        prev_streams.append(s)
-                            if prev_streams is None:
-                                prev_streams = []
-                            prev_streams = [s for s in prev_streams if s in my_providers]
-                            movies_db.set_value(idx, 'streams', prev_streams)
-                continue
-
-        user_in = raw_input("\nAdd '{}' to the database? [y or n] ".format(title))
-        if user_in != 'y':
-            print("Skipping...")
-            continue
-
-        if rating is None:
-            rate = raw_input("What is your predicted Netflix rating for '{}'? ".format(title))
-            rating = float(rate)
-
-        cisi_id, jw_year, tmdb_year, jw_runtime, tmdb_runtime, tmdb_id, jw_id, rt_score = (np.nan,) * 8
-        imdb_id, overview, tagline, tmdb_title, jw_title = (None,) * 5
-        ss, gs = ([],) * 2
-
-        ## justwatch block
-        jw_id, jw_year, desc, jw_runtime, rt_score, genres, streams, jw_title = findJustWatch(title)
-
-        ## tmdb block
-        tmdb_id, tmdb_year, overview, tagline, tmdb_runtime, gs, imdb_id, tmdb_title = findTMDB(title, imdb_id)
-
-        ## double-check adding netflix instant
-        if netflix_instant and 'Netflix' not in streams:
-            ss.append(str('Netflix'))
-
-        ## get year, prefer JustWatch
-        year = jw_year if not np.isnan(jw_year) else tmdb_year
-        if np.isnan(year):
-            if mov.findNext('div', {'class', 'year'}) is not None:
-                year = float(mov.findNext('div', {'class', 'year'}).text)
-
-        ## get runtime, prefer TMDB
-        if isinstance(tmdb_runtime, float) and not np.isnan(tmdb_runtime):
-            runtime = tmdb_runtime
-        else:
-            runtime = jw_runtime
-
-        ## get overview and tagline
-        if tagline is None:
-            tagline = desc
-        if overview is None:
-            overview = desc
-
-        ## get streams
-        if any(streams):
-            ss = streams
-        ## just to be sure
-        if ss is None or not any(ss):
-            ss = []
-
-        ## combine genres
-        if any(genres):
-            for g in genres:
-                if g not in gs:
-                    gs.append(g)
-        if 'Comedy' in gs:
-            user_in = raw_input("\nIs {} in the 'Stand-Up' genre? [y or n] ".format(title))
-            if user_in == 'y':
-                gs.append('Stand-Up')
-        ## just to be sure
-        if gs is None or not any(gs):
-            gs = []
-
-        movies.append({
-            'netflix_id' : netflix_id
-            , 'tmdb_id' : tmdb_id
-            , 'canistreamit_id' : cisi_id
-            , 'imdb_id' : imdb_id
-            , 'title' : title
-            , 'rating' : rating
-            , 'genres' : gs
-            , 'netflix_instant' : netflix_instant
-            , 'streams' : ss
-            , 'year' : year
-            , 'runtime' : runtime
-            , 'overview' : overview
-            , 'tagline' : tagline
-            , 'jw_id' : jw_id
-            , 'rt_score' : rt_score
-        })
-        with open('new_movies.json', 'w') as outfile:
-            json.dump(movies, outfile)
-
-    return movies, movies_db
-
-def tryFloat(x):
+def tryFloat(x, get = False):
     try:
         float(x)
     except:
-        return False
-    return True
+        if get:
+            return str(x)
+        else:
+            return False
+    if get:
+        return float(x)
+    else:
+        return True
 
 ## load api key for TMDB
 with open("config/config.csv", "U") as f:
@@ -717,11 +615,16 @@ with open("config/config.csv", "U") as f:
 tmdb.API_KEY = config['TMDB_API_KEY']
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--update", help = "update streaming status and rotten tomatoes score of movies already in database",
-                    action = "store_true")
+parser.add_argument(
+    "--update",
+    help = "update streaming status and rotten tomatoes score of movies already in database",
+    action = "store_true"
+)
 parser.add_argument("--saved", help = "also process movies in saved queue",
                     action = "store_true")
 parser.add_argument("--mylist", help = "also process movies from my list (streaming queue)",
+                    action = "store_true")
+parser.add_argument("--gallery", help = "also process movies from gallery (streaming queue)",
                     action = "store_true")
 args = parser.parse_args()
 
@@ -742,19 +645,22 @@ try:
         movies_db = pd.DataFrame(movies_in)
 except:
     movies_db = pd.DataFrame({
-        'netflix_id' : []
-        , 'rating' : []
-        , 'title' : []
-        , 'canistreamit_id' : []
-        , 'tmdb_id' : []
-        , 'imdb_id' : []
-        , 'genres' : []
-        , 'streams' : []
-        , 'netflix_instant' : []
-        , 'runtime' : []
-        , 'year' : []
-        , 'overview' : []
-        , 'tagline' : []
+            'netflix_id' : []
+            , 'tmdb_id' : []
+            , 'canistreamit_id' : []
+            , 'imdb_id' : []
+            , 'title' : []
+            , 'rating' : []
+            , 'genres' : []
+            , 'netflix_instant' : []
+            , 'streams' : []
+            , 'year' : []
+            , 'runtime' : []
+            , 'overview' : []
+            , 'tagline' : []
+            , 'jw_id' : []
+            , 'rt_score' : []
+            , 'queue' : []
     })
 
 ## load netflix queue
@@ -764,30 +670,98 @@ with open("input/queue_body.html", "r") as f:
 genres = tmdb.Genres().list()['genres']
 alt_genres = [{'id' : 10769, 'name' : 'Foreign'}]
 
-print("Processing Active queue...")
-movies, movies_db = processMovies(soup, movies_db, update)
+print("\nProcessing Active queue...\n")
+## reset queue field
+movies_db.queue = [[q for q in qq if q != 'Queue'] for qq in movies_db.queue]
+
+## process queue
+movies, movies_db = process(soup, 'queue-item', movies_db, 'queue', 'Queue')
 
 if args.saved:
     with open("input/saved_queue.html", "r") as f:
         soup = BeautifulSoup(f, 'html.parser')
-    print("\nProcessing Saved queue...")
-    saved_movies, movies_db = processMovies(soup, movies_db, update)
+    ## reset queue field
+    movies_db.queue = [[q for q in qq if q != 'Saved'] for qq in movies_db.queue]
+    print("\nProcessing Saved queue...\n")
+    saved_movies, movies_db = process(soup, 'queue-item', movies_db, 'queue', 'Saved')
 else:
     saved_movies = None
     print("\nSaved queue will not be processed. To process saved queue as well use command line arg --saved.")
 if args.mylist:
     with open("input/my_list.html", "r") as f:
         soup = BeautifulSoup(f, 'html.parser', from_encoding = 'utf-8')
-    print("\nProcessing My List (streaming queue)...")
-    mylist_movies, movies_db = processMyList(soup, movies_db, update)
+    ## reset queue field
+    movies_db.queue = [[q for q in qq if q != 'Streaming'] for qq in movies_db.queue]
+    print("\nProcessing My List (streaming queue)...\n")
+    mylist_movies, movies_db = process(soup, 'title', movies_db, 'list', 'Streaming')
+    ## clean up Netflix streaming info
+    streams = []
+    for ss, qq in zip(movies_db.streams, movies_db.queue):
+        if 'Netflix' in ss and 'Streaming' not in qq:
+            print ss, qq
+            streams.append([s for s in ss if s != 'Netflix'])
+        else:
+            streams.append(ss)
+    movies_db.streams = pd.Series(streams)
 else:
     mylist_movies = None
-    print("\nMy List (streaming queue) will not be processed. To process My List as well use command line arg --mylist.")
+    print("\nMy List (streaming queue as a list) will not be processed. To process Streaming Queue as well use command line arg --mylist.")
+if args.gallery:
+    with open("input/my_gallery.html", "r") as f:
+        soup = BeautifulSoup(f, 'html.parser', from_encoding = 'utf-8')
+    ## reset queue field
+    movies_db.queue = [[q for q in qq if q != 'Streaming'] for qq in movies_db.queue]
+    print("\nProcessing Gallery (streaming queue)...\n")
+    gallery_movies, movies_db = process(soup, 'video-preload-title-label', movies_db, 'gallery', 'Streaming')
+    ## clean up Netflix streaming info
+    streams = []
+    for ss, qq in zip(movies_db.streams, movies_db.queue):
+        if 'Netflix' in ss and 'Streaming' not in qq:
+            streams.append([s for s in ss if s != 'Netflix'])
+        else:
+            streams.append(ss)
+    movies_db.streams = pd.Series(streams)
+else:
+    gallery_movies = None
+    print("\nGallery (streaming queue as a gallery) will not be processed. To process Streaming Queue as well use command line arg --gallery.")
+
+if update:
+    print("\nUpdating database with streaming availability...\n")
+    for idx, row in movies_db.iterrows():
+        title = movies_db.loc[idx, 'title']
+        print(title)
+        jw_id = movies_db.loc[idx, 'jw_id']
+        rt_score = movies_db.loc[idx, 'rt_score']
+        prev_streams = movies_db.loc[idx, 'streams']
+        prev_genres = movies_db.loc[idx, 'genres']
+        if not not jw_id and isinstance(jw_id, float) and not np.isnan(jw_id):
+            jw_id, rt_score, streams, gs = getJustWatch(
+                title, jw_id, rt_score, prev_streams, prev_genres
+            )
+            movies_db.at[idx, 'jw_id'] = jw_id
+            if not np.isnan(rt_score):
+                movies_db.at[idx, 'rt_score'] = rt_score
+                if any(streams):
+                    for s in streams:
+                        if s not in prev_streams:
+                            if "Netflix" in s and "Netflix" not in prev_streams:
+                                prev_streams.append('Netflix')
+                            else:
+                                prev_streams.append(s)
+                    if prev_streams is None:
+                        prev_streams = []
+                    prev_streams = [s for s in prev_streams if s in my_providers]
+                    prev_streams = list(set(prev_streams))
+                    movies_db.at[idx, 'streams'] = prev_streams
+                else:
+                    if 'Streaming' not in movies_db.loc[idx, 'queue']:
+                        movies_db.at[idx, 'streams'] = []
+                    else:
+                        movies_db.loc[idx, 'streams'] = ['Netflix']
 
 ## combine new movies with previous DB
 ## save updated combined DB
 new_movies = pd.DataFrame(movies)
-
 out_movies = movies_db.append(new_movies, ignore_index = True)
 if saved_movies is not None:
     saved_movies = pd.DataFrame(saved_movies)
@@ -795,6 +769,9 @@ if saved_movies is not None:
 if mylist_movies is not None:
     mylist_movies = pd.DataFrame(mylist_movies)
     out_movies = out_movies.append(mylist_movies, ignore_index = True)
+if gallery_movies is not None:
+    gallery_movies = pd.DataFrame(gallery_movies)
+    out_movies = out_movies.append(gallery_movies, ignore_index = True)
 
 with open('databases/movies_db.json', 'w') as outfile:
     json.dump(out_movies.T.to_dict().values(), outfile)

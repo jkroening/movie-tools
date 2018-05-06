@@ -45,9 +45,19 @@ def getMyListTitles(soup, lst = []):
             lst.append(s.strip().lower())
     return(lst)
 
+def getGalleryTitles(soup, lst = []):
+    for mov in soup.find_all('div', {'class' : 'video-preload-title-label'}):
+        m = [m for m in mov.strings]
+        m = [x.replace(',', '') for x in m]
+        for s in unidecode(m[0]).replace("&", "and").strip().split(": "):
+            lst.append(s.strip().lower())
+    return(lst)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--saved", help = "also check movies in saved queue",
+                    action = "store_true")
+parser.add_argument("--aslist",
+                    help = "check streaming queue as list, not as gallery",
                     action = "store_true")
 args = parser.parse_args()
 
@@ -68,8 +78,13 @@ else:
 
 with open("input/my_list.html", "r") as f:
     mylist = BeautifulSoup(f, 'html.parser', from_encoding = 'utf-8')
+with open("input/my_gallery.html", "r") as f:
+    gallery = BeautifulSoup(f, 'html.parser', from_encoding = 'utf-8')
 
-instant = getMyListTitles(mylist)
+if args.aslist:
+    instant = getMyListTitles(mylist)
+else:
+    instant = getGalleryTitles(gallery)
 
 ## get only what's not in my list but is in DVD and saved queues
 ## not the reverse
