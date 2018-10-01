@@ -56,8 +56,8 @@ def getGalleryTitles(soup, lst = []):
 parser = argparse.ArgumentParser()
 parser.add_argument("--saved", help = "also check movies in saved queue",
                     action = "store_true")
-parser.add_argument("--aslist",
-                    help = "check streaming queue as list, not as gallery",
+parser.add_argument("--asgallery",
+                    help = "check streaming queue as gallery, not as list",
                     action = "store_true")
 args = parser.parse_args()
 
@@ -81,7 +81,7 @@ with open("input/my_list.html", "r") as f:
 with open("input/my_gallery.html", "r") as f:
     gallery = BeautifulSoup(f, 'html.parser', from_encoding = 'utf-8')
 
-if args.aslist:
+if not args.asgallery:
     instant = getMyListTitles(mylist)
 else:
     instant = getGalleryTitles(gallery)
