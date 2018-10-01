@@ -490,6 +490,8 @@ def process(soup, cls, movies_db, mode = 'queue', queue = 'Queue'):
                 else:
                     if rating is None:
                         rating = tryFloat(movies_db.loc[idx, 'rating'], get = True)
+                    if rating == "":
+                        rating = np.nan
                     if np.isnan(rating):
                         movies_db.set_value(idx, 'rating', pct_rating)
                     else:
@@ -585,7 +587,7 @@ def process(soup, cls, movies_db, mode = 'queue', queue = 'Queue'):
             , 'tagline' : tagline
             , 'jw_id' : jw_id
             , 'rt_score' : rt_score
-            , 'queue' : queue
+            , 'queue' : [queue]
         })
         with open('new_movies.json', 'w') as outfile:
             json.dump(movies, outfile)
@@ -672,6 +674,7 @@ alt_genres = [{'id' : 10769, 'name' : 'Foreign'}]
 
 print("\nProcessing Active queue...\n")
 ## reset queue field
+movies_db.queue = pd.Series([list([a]) if not isinstance(a, list) else a for a in movies_db.queue.values])
 movies_db.queue = [[q for q in qq if q != 'Queue'] for qq in movies_db.queue]
 
 ## process queue
