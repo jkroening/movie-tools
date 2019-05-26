@@ -1,1 +1,4 @@
 TMDB_API_KEY,yourkeyhere
+MOVIELENS_UN,yourusernamehere
+MOVIELENS_PW,yourpasswordhere
+WEBDRIVER_PATH,THE/PATH/TO/YOUR/PROFILE/chromedriver

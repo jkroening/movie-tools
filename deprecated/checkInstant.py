@@ -5,12 +5,12 @@
 ## Place an html block from your Netflix DVD queue in a file called
 ## queue_body.html. the block of interest can be copied in Chrome by choosing
 ## "Inspect Element" over your DVD queue (https://dvd.netflix.com/Queue),
-## selecting the div with id "activeQueueItems" and right-clicking to select
-## copy outerHTML. then paste that into queue_body.
+## selecting the div where id="sortable" and aria-label="Active queue list"
+## and right-clicking to select copy outerHTML. then paste that into queue_body.
 ## if you would also like to check the movies in the Saved section of your
 ## Netflix queue (movies that aren't released yet on Netflix DVD but may be
 ## available on streaming services) then follow the same procedure above, but for
-## "savedQueueItems" and copy that outerHTML into saved_queue.html. Use the flag
+## "savedListQueue" and copy that outerHTML into saved_queue.html. Use the flag
 ## --saved to process movies from the Saved section of your DVD queue.
 ## The same procedure applies to movies in your "My List" (streaming queue) that
 ## you would like to add, instead you will select the div with class "rowList"
@@ -26,12 +26,20 @@ from bs4 import BeautifulSoup
 from unidecode import unidecode
 
 
-def findPlays(soup, lst = []):
-    for mov in soup.find_all('div', {'class' : 'queue-item'}):
+def findQueuePlays(soup, lst = []):
+    for mov in soup.find_all('li', {'class' : 'queue-item'}):
         m = [m for m in mov.strings]
         m = [x.replace(',', '') for x in m]
         if 'Play' in m:
-            lst.append(unidecode(m[1]).replace("&", "and").strip())
+            lst.append(unidecode(m[4]).replace("&", "and").strip())
+    return(lst)
+
+def findSavedPlays(soup, lst = []):
+    for mov in soup.find_all('li'):
+        m = [m for m in mov.strings]
+        m = [x.replace(',', '') for x in m]
+        if 'Play' in m:
+            lst.append(unidecode(m[2]).replace("&", "and").strip())
     return(lst)
 
 def getMyListTitles(soup, lst = []):
@@ -67,12 +75,12 @@ with open("input/queue_body.html", "r") as f:
     queue = BeautifulSoup(f, 'html.parser')
 
 plays = []
-plays = findPlays(queue, plays)
+plays = findQueuePlays(queue, plays)
 
 if args.saved:
     with open("input/saved_queue.html", "r") as f:
         saved = BeautifulSoup(f, 'html.parser')
-    plays = findPlays(saved, plays)
+    plays = findSavedPlays(saved, plays)
 else:
     print("\nSaved queue will not be checked. To check saved queue as well use command line arg --saved.")
 
