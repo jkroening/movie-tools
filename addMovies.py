@@ -352,6 +352,8 @@ while keepgoing:
     new_title = input("\nWhat is the name of the movie to add?  ")
     new_id = tryFloat(input("What is the MovieLens ID of the movie?  "), get = True)
     new_rating = tryFloat(input("What is the MovieLens predicted rating for the movie?  "), get = True)
+    avg_rating = tryFloat(input("What is the MovieLens average rating for the movie?  "), get = True)
+    num_rating = tryFloat(input("What is the MovieLens number of ratings for the movie?  "), get = True)
 
     ## check if the movie is already in the DB
     if new_id != '' and len(movies_db[(movies_db.movielens_id == new_id)]):
@@ -436,6 +438,8 @@ while keepgoing:
         , 'tagline' : tagline
         , 'jw_id' : jw_id
         , 'rt_score' : rt_score
+        , 'numratings' : num_rating
+        , 'avgrating' : avg_rating
     }, ignore_index = True)
 
     print("{} added.".format(new_title))
