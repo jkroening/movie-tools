@@ -47,25 +47,8 @@ try:
         movies_in = json.load(f)
         out_movies = pd.DataFrame(movies_in)
 except:
-    out_movies = pd.DataFrame({
-            'netflix_id' : []
-            , 'tmdb_id' : []
-            , 'canistreamit_id' : []
-            , 'imdb_id' : []
-            , 'title' : []
-            , 'rating' : []
-            , 'netflix_rating' : []
-            , 'genres' : []
-            , 'netflix_instant' : []
-            , 'streams' : []
-            , 'year' : []
-            , 'runtime' : []
-            , 'overview' : []
-            , 'tagline' : []
-            , 'jw_id' : []
-            , 'rt_score' : []
-            , 'queue' : []
-    })
+    print("Failed to load database.")
+    sys.exit(1)
 
 ## whether canistream.it should be checked for existing DB entries to update streams
 if args.streaming:
@@ -88,6 +71,8 @@ while len(sorted_movies) == 0:
     genre_in = input("Which genre(s) do you want to watch? (Enter up to 2, separated by a comma, with '-' in front to exclude; or 'All'): ")
 
     out_movies.rating = [round(o, 1) if isinstance(o, float) else np.nan for o in out_movies.rating.values]
+    out_movies.avgrating = [round(o, 1) if isinstance(o, float) else np.nan for o in out_movies.avgrating.values]
+    out_movies.numratings = [str(int(o)) if not np.isnan(o) else str("NaN") for o in out_movies.numratings.values]
     if genre_in.lower() == 'all':
         sorted_movies = out_movies.sort_values(['rating', 'rt_score'], ascending = [False, False])
     else:
@@ -116,7 +101,7 @@ while len(sorted_movies) == 0:
         movies_genred = out_movies.loc[genre_idx, ]
         sorted_movies = movies_genred.sort_values(['rating', 'rt_score'], ascending = [False, False])
 
-    print("\n{}\n".format(sorted_movies[['title', 'rating', 'rt_score', 'year', 'runtime', 'genres', 'streams']].to_string()))
+    print("\n{}\n".format(sorted_movies[['title', 'rating', 'avgrating', 'numratings', 'rt_score', 'year', 'runtime', 'genres', 'streams']].to_string()))
 
 while True:
     user_in = input("Enter the row index number of movie you want to know more about: (or q to quit)  ")
@@ -136,6 +121,8 @@ while True:
     print("\n{}".format(int(sorted_movies.loc[int(user_in), 'year'])))
     print("\n{} mins".format(runtime))
     print("\n{} stars".format(round(sorted_movies.loc[int(user_in), 'rating'], 1)))
+    print("\n{} average rating".format(round(sorted_movies.loc[int(user_in), 'avgrating'], 1)))
+    print("\n{} ratings".format(sorted_movies.loc[int(user_in), 'numratings']))
     print("\n{}%".format(rt_score))
     print("\n{}".format(sorted_movies.loc[int(user_in), 'genres']))
     print("\n{}\n".format(streams))
