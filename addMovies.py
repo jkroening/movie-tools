@@ -397,7 +397,7 @@ while keepgoing:
             rts = tryFloat(input("What is the Rotten Tomatoes score?  "), get = True)
             if rts == '':
                 rts = np.nan
-            user_streams = input("On which services is it streaming? (spearated by commas)  ")
+            user_streams = input("On which services is it streaming? (separated by commas)  ")
             if user_streams != '':
                 streams = [x.strip() for x in user_streams.split(',')]
 
