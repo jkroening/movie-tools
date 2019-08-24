@@ -174,25 +174,26 @@ def findJustWatch(title, jw = None, jw_genres = None, imdb_id = None, tmdb_id = 
     res = jw.search_for_item(query = title)
     while sel != 'y' and res['total_results'] > 0:
         for r in res['items']:
-            provs = pd.DataFrame(r['scoring'])
-            if (imdb_id != None and len(provs.value[provs.provider_type == 'imdb:id'].values) != 0):
-                if provs.value[provs.provider_type == 'imdb:id'].values != imdb_id:
-                    next
-            if (tmdb_id != None and len(provs.value[provs.provider_type == 'tmdb:id'].values) != 0):
-                if provs.value[provs.provider_type == 'tmdb:id'].values != tmdb_id:
-                    next
-            jw_title = unidecode(r['title']).replace(',', '')
-            if jw_title.lower() == title.lower():
-                sel = 'y'
-            elif title.lower() in jw_title.lower() or jw_title.lower() in title.lower():
-                sel = input(
-                    "Matching '{}' with JustWatch '{}' ({})... OK? [y or n] ".format(title, jw_title, r['id'])
-                ).lower()
-            if sel == 'y':
-                jw_id, year, desc, runtime, rt_score, streams = parseJustWatch(r)
-                break
-            else:
-                print("Trying again...")
+            if 'scoring' in r:
+                provs = pd.DataFrame(r['scoring'])
+                if (imdb_id != None and len(provs.value[provs.provider_type == 'imdb:id'].values) != 0):
+                    if provs.value[provs.provider_type == 'imdb:id'].values != imdb_id:
+                        next
+                if (tmdb_id != None and len(provs.value[provs.provider_type == 'tmdb:id'].values) != 0):
+                    if provs.value[provs.provider_type == 'tmdb:id'].values != tmdb_id:
+                        next
+                jw_title = unidecode(r['title']).replace(',', '')
+                if jw_title.lower() == title.lower():
+                    sel = 'y'
+                elif title.lower() in jw_title.lower() or jw_title.lower() in title.lower():
+                    sel = input(
+                        "Matching '{}' with JustWatch '{}' ({})... OK? [y or n] ".format(title, jw_title, r['id'])
+                    ).lower()
+                if sel == 'y':
+                    jw_id, year, desc, runtime, rt_score, streams = parseJustWatch(r)
+                    break
+                else:
+                    print("Trying again...")
         break
     if sel != 'y':
         print("Unable to find match in JustWatch for '{}'".format(title))
@@ -498,22 +499,25 @@ if updateratings:
                     time.sleep(0.5)
                     inner = browser.execute_script("return document.body.innerHTML")
                     soup = BeautifulSoup(inner, features="lxml")
-                    divs = soup.find('div', {'class': 'row movie-highlights'}).findAll(
-                        'div', {'class': 'ng-binding'}
-                    )
                     ## predicted rating
-                    rating = divs[0].text
+                    rating = soup.find(
+                        'div', {'class': 'movie-details-heading'}
+                    ).findNext('div').text
                     rating = re.findall("\d+\.\d+", rating)[0]
                     rating = float(rating)
                     print('Updated rating: {}'.format(rating))
                     ## number of ratings
-                    numratings = divs[1].text
+                    numratings = soup.findAll(
+                        'div', {'class': 'movie-details-heading'}
+                    )[1].text
                     numratings = tryInt(
                         numratings.split('Average of ')[1].split(' ')[0].replace(',', ''),
                         get = True
                     )
                     ## average rating
-                    avgrating = divs[2].text
+                    avgrating = soup.findAll(
+                        'div', {'class': 'movie-details-heading'}
+                    )[1].findNext('div').text
                     avgrating = re.findall("\d+\.\d+", avgrating)[0]
                     avgrating = float(avgrating)
 

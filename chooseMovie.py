@@ -72,7 +72,7 @@ while len(sorted_movies) == 0:
 
     out_movies.rating = [round(o, 1) if isinstance(o, float) else np.nan for o in out_movies.rating.values]
     out_movies.avgrating = [round(o, 1) if isinstance(o, float) else np.nan for o in out_movies.avgrating.values]
-    out_movies.numratings = [str(int(o)) if not np.isnan(o) else str("NaN") for o in out_movies.numratings.values]
+    out_movies.numratings = [str(int(o)) if isinstance(o, int) else str("NaN") for o in out_movies.numratings.values]
     if genre_in.lower() == 'all':
         sorted_movies = out_movies.sort_values(['rating', 'rt_score'], ascending = [False, False])
     else:
