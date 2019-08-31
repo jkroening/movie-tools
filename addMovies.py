@@ -217,7 +217,7 @@ def findJustWatch(title, jw = None, jw_genres = None, imdb_id = None, tmdb_id = 
 
     return jw_id, year, desc, runtime, rt_score, gs, streams, jw_title
 
-def getJustWatch(title, jw_id, jw = None):
+def getJustWatch(title, jw_id, rt_score, streams, jw = None):
     if jw == None:
         jw = JustWatch(country = 'US')
     sel = 'n'
@@ -229,12 +229,20 @@ def getJustWatch(title, jw_id, jw = None):
             if e.response.status_code == 500:
                 print("No match found for this JustWatch ID {}.".format(jw_id))
                 return jw_id, rt_score, streams
+            if e.response.status_code == 404:
+                print("No match found for this JustWatch ID {}.".format(jw_id))
+                return jw_id, rt_score, streams
             print(e.response.status_code)
             print("JustWatch not reached. Try again...")
             print("** Rate Limit was likely exceeded. Please use VPN. **")
+            nada = input("Press [enter] to continue once VPN is turned on.")
+            continue
         else:
             print("* MATCHED JustWatch")
             break
+    if 'error' in res:
+        print("No match found for this JustWatch ID {}.".format(jw_id))
+        return jw_id, rt_score, streams
     jw_id, year, desc, runtime, rt_score, streams = parseJustWatch(res)
     return jw_id, rt_score, streams
 
@@ -456,7 +464,9 @@ if updatestreaming:
         jw_id = movies_db.loc[idx, 'jw_id']
         prev_rt_score = movies_db.loc[idx, 'rt_score']
         if not not jw_id and isinstance(jw_id, float) and not np.isnan(jw_id):
-            jw_id, rt_score, streams = getJustWatch(title, jw_id, jw)
+            jw_id, rt_score, streams = getJustWatch(
+                title, jw_id, prev_rt_score, movies_db.loc[idx, 'streams'], jw
+            )
             if not np.isnan(rt_score):
                 movies_db.at[idx, 'rt_score'] = rt_score
             if any(streams):
