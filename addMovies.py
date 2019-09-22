@@ -253,7 +253,7 @@ def findRTScore(title):
                                              tryInt(r.get('meterScore'), get = True), r['subline'] + r['url']))
         approval = input("Does this look like a match? [y or n]  ")
         if approval == 'y':
-            return tryInt(r['meterScore'], get = True)
+            return tryInt(r.get('meterScore'), get = True)
         else:
             continue
     print("Unable to find match in Rotten Tomatoes for '{}'".format(title))
@@ -452,6 +452,11 @@ while keepgoing:
     }, ignore_index = True)
 
     print("{} added.".format(new_title))
+
+    movies_db.reset_index(inplace = True, drop = True)
+    with open('databases/movies_db.json', 'w') as outfile:
+        json.dump(list(movies_db.T.to_dict().values()), outfile)
+
     keepgoing = input("\nAdd another movie? [y or n]  ")
     if keepgoing == 'n':
         keepgoing = False
