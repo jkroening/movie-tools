@@ -131,21 +131,23 @@ provider_map = {'Netflix Instant' : 'Netflix',
 
 my_providers = ['Netflix', 'Syfy', 'Smithsonian Channel', 'The CW', 'HBO',
                 'NBC', 'Amazon', 'CBS', 'ABC', 'FXNow', 'Tubi TV', 'Crackle',
-                'Hulu', 'AMC', 'PlayStation', 'Showtime', 'Epix', 'Yahoo View']
+                'Hulu', 'AMC', 'PlayStation', 'Showtime', 'Epix', 'Yahoo View',
+                'Kanopy']
 
 def parseStreams(streams):
     ss = []
     if not not streams:
         for s in streams:
             if any(x in s['monetization_type'] for x in ['flatrate', 'flat_rate', 'free']):
-                prov = providers[str(s['provider_id'])]
-                name = prov['clear_name']
-                if name in provider_map:
-                    short_name = provider_map[name]
-                else:
-                    short_name = name
-                if short_name in my_providers:
-                    ss.append(short_name)
+                prov = providers.get(str(s['provider_id']))
+                if prov is not None:
+                    name = prov['clear_name']
+                    if name in provider_map:
+                        short_name = provider_map[name]
+                    else:
+                        short_name = name
+                    if short_name in my_providers:
+                        ss.append(short_name)
     return list(set(ss))
 
 def parseJustWatch(mov):
