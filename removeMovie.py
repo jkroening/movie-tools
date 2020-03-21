@@ -25,7 +25,9 @@ print("\n{}".format(movies_db.loc[title_idx, ['title', 'rating', 'year', 'runtim
 if len(movies_db.loc[title_idx, ]) > 1:
     in_two = int(input("\nWhich one? (Enter index of row) "))
     if isinstance(in_two, int):
-        print("\n{}".format(movies_db.loc[in_two, ['title', 'rating', 'year', 'runtime', 'genres', 'streams', 'queue', 'tagline']].to_string()))
+        print("\n{}".format(movies_db[[
+            'title', 'rating', 'year', 'runtime', 'genres', 'streams', 'tagline'
+        ]].loc[in_two, ]))
     else:
         print("Please enter a valid row number index next time. Exiting...")
         sys.exit()
