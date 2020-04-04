@@ -134,6 +134,35 @@ my_providers = ['Netflix', 'Syfy', 'Smithsonian Channel', 'The CW', 'HBO',
                 'Hulu', 'AMC', 'PlayStation', 'Showtime', 'Epix', 'Yahoo View',
                 'Kanopy']
 
+genre_master = {'Action' : 'Action',
+                'Action & Adventure' : ['Action', 'Adventure'],
+                'Adventure' : 'Adventure',
+                'Animation' : 'Animation',
+                'Comedy' : 'Comedy',
+                'Crime' : 'Crime',
+                'Documentary' : 'Documentary'
+                'Drama' : 'Drama',
+                'Family' : 'Family',
+                'Fantasy' : 'Fantasy',
+                'Foreign' : 'Foreign',
+                'History' : 'History',
+                'Horror' : 'Horror',
+                'Kids & Family' : 'Family',
+                'Made in Europe' : [None],
+                'Music' : 'Music',
+                'Music & Musical' : 'Music',
+                'Mystery' : 'Mystery',
+                'Mystery & Thriller' : ['Mystery', 'Thriller'],
+                'Romance' : 'Romance',
+                'Science Fiction' : 'Science Fiction',
+                'Science-Fiction' : 'Science Fiction',
+                'Stand-Up' : 'Stand-Up',
+                'Thriller' : 'Thriller',
+                'War' : 'War',
+                'War & Military' : 'War',
+                'Western' : 'Western'
+}
+
 def parseStreams(streams):
     ss = []
     if not not streams:
@@ -425,6 +454,8 @@ while keepgoing:
         netflix_instant = True
     ## clean up genres
     gs = genres + list(set(jw_genres) - set(genres))
+    gs = [x for g in gs for x in genre_master[g] if x is not None]
+    gs = list(set(gs))
     if 'Comedy' in gs:
         user_in = input("Is {} in the 'Stand-Up' genre? [y or n]  ".format(title))
         if user_in == 'y':
