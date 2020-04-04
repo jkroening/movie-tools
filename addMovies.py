@@ -515,7 +515,7 @@ if updateratings:
                     browser.get(url)
                     time.sleep(0.5)
                     inner = browser.execute_script("return document.body.innerHTML")
-                    soup = BeautifulSoup(inner, features="lxml")
+                    soup = BeautifulSoup(inner, features = "lxml")
                     ## predicted rating
                     rating = soup.find(
                         'div', {'class': 'movie-details-heading'}
