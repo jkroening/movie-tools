@@ -1,3 +1,4 @@
+__pycache__
 *.txt
 config/config.csv
 config/queue_heuristics.txt
