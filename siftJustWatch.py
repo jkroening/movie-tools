@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from unidecode import unidecode
 
+
 def siftJustWatch(title, jw = None):
     if jw == None:
         jw = JustWatch(country = 'US')
@@ -29,3 +30,6 @@ def siftJustWatch(title, jw = None):
         print("Unable to find match in JustWatch for '{}'".format(title))
     else:
         print("JustWatch ID is {}".format(int(jw_id)))
+
+inp = input("What is the title of the film? ")
+siftJustWatch(inp)
