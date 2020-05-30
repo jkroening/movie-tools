@@ -129,10 +129,12 @@ provider_map = {'Netflix Instant' : 'Netflix',
                 'HBO Now' : 'HBO',
                 'HBO Go' : 'HBO'}
 
-my_providers = ['Netflix', 'Syfy', 'Smithsonian Channel', 'The CW', 'HBO',
-                'NBC', 'Amazon', 'CBS', 'ABC', 'FXNow', 'Tubi TV', 'Crackle',
-                'Hulu', 'AMC', 'PlayStation', 'Showtime', 'Epix', 'Yahoo View',
-                'Kanopy']
+my_providers = ['Netflix','Amazon Prime Video','HBO Max','Hulu','Amazon Video',
+                'Apple TV Plus','YouTube','YouTube Free','CBS','HBO Now',
+                'The CW','Showtime','PBS','FXNow','Tubi TV','Kanopy',
+                'Comedy Central','Max Go','HBO Go','ABC','NBC','Syfy','A&E',
+                'Lifetime','Cartoon Network','Adult Swim','USA Network','Fox',
+                'TCM','Bravo TV','TNT']
 
 genre_master = {'Action' : ['Action'],
                 'Action & Adventure' : ['Action', 'Adventure'],
@@ -167,7 +169,7 @@ def parseStreams(streams):
     ss = []
     if not not streams:
         for s in streams:
-            if any(x in s['monetization_type'] for x in ['flatrate', 'flat_rate', 'free']):
+            if any(x in s['monetization_type'] for x in ['ads', 'flatrate', 'flat_rate', 'free']):
                 prov = providers.get(str(s['provider_id']))
                 if prov is not None:
                     name = prov['clear_name']
