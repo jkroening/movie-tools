@@ -393,10 +393,6 @@ while keepgoing:
     netflix_rating = None ## not using netflix as rating basis anymore
     new_title = input("\nWhat is the name of the movie to add?  ")
     new_id = tryFloat(input("What is the MovieLens ID of the movie?  "), get = True)
-    new_rating = tryFloat(input("What is the MovieLens predicted rating for the movie?  "), get = True)
-    avg_rating = tryFloat(input("What is the MovieLens average rating for the movie?  "), get = True)
-    num_rating = tryFloat(input("What is the MovieLens number of ratings for the movie?  "), get = True)
-
     ## check if the movie is already in the DB
     if new_id != '' and len(movies_db[(movies_db.movielens_id == new_id)]):
         print('This movie seems to already exist in the DB. Skipping...')
@@ -404,6 +400,9 @@ while keepgoing:
         if keepgoing == 'n':
             keepgoing = False
         continue
+    new_rating = tryFloat(input("What is the MovieLens predicted rating for the movie?  "), get = True)
+    avg_rating = tryFloat(input("What is the MovieLens average rating for the movie?  "), get = True)
+    num_rating = tryFloat(input("What is the MovieLens number of ratings for the movie?  "), get = True)
 
     ## find TMDB
     tmdb_id, year, overview, tagline, runtime, genres, imdb_id, title = findTMDB(new_title)
