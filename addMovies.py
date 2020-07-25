@@ -216,12 +216,13 @@ def findJustWatch(title, jw = None, jw_genres = None, imdb_id = None, tmdb_id = 
                     if provs.value[provs.provider_type == 'tmdb:id'].values != tmdb_id:
                         next
                 jw_title = unidecode(r['title']).replace(',', '')
-                if jw_title.lower() == title.lower():
-                    sel = 'y'
-                elif title.lower() in jw_title.lower() or jw_title.lower() in title.lower():
-                    sel = input(
-                        "Matching '{}' with JustWatch '{}' ({})... OK? [y or n] ".format(title, jw_title, r['id'])
-                    ).lower()
+                if jw_title is not None and title is not None:
+                    if jw_title.lower() == title.lower():
+                        sel = 'y'
+                    elif title.lower() in jw_title.lower() or jw_title.lower() in title.lower():
+                        sel = input(
+                            "Matching '{}' with JustWatch '{}' ({})... OK? [y or n] ".format(title, jw_title, r['id'])
+                        ).lower()
                 if sel == 'y':
                     jw_id, year, desc, runtime, rt_score, streams = parseJustWatch(r)
                     break
@@ -279,18 +280,30 @@ def getJustWatch(title, jw_id, rt_score, streams, jw = None):
     jw_id, year, desc, runtime, rt_score, streams = parseJustWatch(res)
     return jw_id, rt_score, streams
 
-def findRTScore(title):
+def findRTScore(title, auto = False):
     res = RottenTomatoesClient.search(term = title, limit = 5)
     for r in res['movies']:
-        print("{} -- {} -- {}% -- {}".format(r['name'], tryInt(r['year'], get = True),
-                                             tryInt(r.get('meterScore'), get = True), r['subline'] + r['url']))
-        approval = input("Does this look like a match? [y or n]  ")
-        if approval == 'y':
-            return tryInt(r.get('meterScore'), get = True)
+        if not auto:
+            print("{} -- {} -- {}% -- {}".format(
+                r['name'], tryInt(r['year'], get = True),
+                tryInt(r.get('meterScore'), get = True), r['subline'] + r['url']
+            ))
+            approval = input("Does this look like a match? [y or n]  ")
+            if approval == 'y':
+                return(tryInt(r.get('meterScore'), get = True))
+            else:
+                continue
         else:
-            continue
+            if r['name'] == title:
+                rt_score = tryInt(r.get('meterScore'), get = True)
+                if rt_score == 'None':
+                    continue
+                else:
+                    return(rt_score)
+            else:
+                continue
     print("Unable to find match in Rotten Tomatoes for '{}'".format(title))
-    return None
+    return(np.nan)
 
 def tryFloat(x, get = False):
     try:
@@ -444,7 +457,7 @@ while keepgoing:
 
     ## get RT Score directly
     rt_score = findRTScore(title)
-    if rt_score is None:
+    if not np.isnan(rt_score):
         rt_score = rts ## use JustWatch RT Score, which is usually out of date
 
     ## clean up streams
@@ -506,8 +519,12 @@ if updatestreaming:
             jw_id, rt_score, streams = getJustWatch(
                 title, jw_id, prev_rt_score, movies_db.loc[idx, 'streams'], jw
             )
+            if np.isnan(rt_score):
+                rt_score = findRTScore(title, auto = True)
             if not np.isnan(rt_score):
                 movies_db.at[idx, 'rt_score'] = rt_score
+            else:
+                rt_score = movies_db.at[idx, 'rt_score']
             if any(streams):
                 curr_streams = [s for s in streams if s in my_providers]
                 streams = list(set(curr_streams))
