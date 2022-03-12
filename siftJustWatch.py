@@ -1,8 +1,10 @@
-from justwatch import JustWatch
 import numpy as np
 import pandas as pd
 from unidecode import unidecode
-
+from justwatch import JustWatch, justwatchapi
+justwatchapi.__dict__['HEADER'] = {
+    'User-Agent': 'JustWatch client (github.com/dawoudt/JustWatchAPI)'
+}
 
 def siftJustWatch(title, jw = None):
     if jw == None:

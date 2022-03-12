@@ -13,7 +13,6 @@ from unidecode import unidecode
 import pandas as pd
 import tmdbsimple as tmdb
 import requests
-from justwatch import JustWatch
 from rotten_tomatoes_client import RottenTomatoesClient
 from selenium import webdriver
 from bs4 import BeautifulSoup
@@ -25,6 +24,10 @@ import shutil
 import argparse
 import warnings
 import pdb
+from justwatch import JustWatch, justwatchapi
+justwatchapi.__dict__['HEADER'] = {
+    'User-Agent': 'JustWatch client (github.com/dawoudt/JustWatchAPI)'
+}
 
 warnings.simplefilter(action = 'ignore', category = FutureWarning)
 
@@ -158,6 +161,7 @@ genre_master = {'Action' : ['Action'],
                 'Romance' : ['Romance'],
                 'Science Fiction' : ['Science Fiction'],
                 'Science-Fiction' : ['Science Fiction'],
+                'Sport' : [None],
                 'Stand-Up' : ['Stand-Up'],
                 'Thriller' : ['Thriller'],
                 'War' : ['War'],
@@ -205,7 +209,7 @@ def findJustWatch(title, jw = None, jw_genres = None, imdb_id = None, tmdb_id = 
     streams = []
     jw_title = None
     res = jw.search_for_item(query = title)
-    while sel != 'y' and res['total_results'] > 0:
+    while sel != 'y' and 'total_results' in res and res['total_results'] > 0:
         for r in res['items']:
             if 'scoring' in r:
                 provs = pd.DataFrame(r['scoring'])
@@ -290,7 +294,8 @@ def findRTScore(title, auto = False):
             ))
             approval = input("Does this look like a match? [y or n]  ")
             if approval == 'y':
-                return(tryInt(r.get('meterScore'), get = True))
+                rt_score = tryInt(r.get('meterScore'), get = True)
+                return(rt_score)
             else:
                 continue
         else:
@@ -323,7 +328,10 @@ def tryInt(x, get = False):
         int(x)
     except:
         if get:
-            return str(x)
+            if x is None:
+                return np.nan
+            else:
+                return str(x)
         else:
             return False
     if get:
