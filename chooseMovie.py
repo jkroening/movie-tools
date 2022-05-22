@@ -39,7 +39,14 @@ import pdb
 parser = argparse.ArgumentParser()
 parser.add_argument("--streaming", help = "only display movies that are available to stream",
                     action = "store_true")
+parser.add_argument("--sort",
+                    help = "features to sort by, descending",
+                    type = str,
+                    default = ['rating', 'rt_score'])
 args = parser.parse_args()
+args_vars = vars(parser.parse_args())
+if "sort" in args_vars.keys():
+    args_vars["sort"] = [s.strip() for s in args_vars["sort"].split(",")]
 
 ## load database
 try:
@@ -51,7 +58,7 @@ except:
     sys.exit(1)
 
 ## whether canistream.it should be checked for existing DB entries to update streams
-if args.streaming:
+if args_vars["streaming"]:
     streaming = True
     ## subset out_movies
     out_movies = out_movies.loc[[True if x != [] else False for x in out_movies.streams.values], ]
@@ -74,7 +81,7 @@ while len(sorted_movies) == 0:
     out_movies.avgrating = [round(o, 1) if isinstance(o, float) else np.nan for o in out_movies.avgrating.values]
     out_movies.numratings = [str(int(o)) if isinstance(o, int) else str("NaN") for o in out_movies.numratings.values]
     if genre_in.lower() == 'all':
-        sorted_movies = out_movies.sort_values(['rating', 'rt_score'], ascending = [False, False])
+        sorted_movies = out_movies.sort_values(args_vars["sort"], ascending = [False, False])
     else:
         genres_in = [g.strip() for g in genre_in.split(",")]
 
@@ -106,7 +113,7 @@ while len(sorted_movies) == 0:
             genre_idx = genre1_idx
 
         movies_genred = out_movies.loc[genre_idx, ]
-        sorted_movies = movies_genred.sort_values(['rating', 'rt_score'], ascending = [False, False])
+        sorted_movies = movies_genred.sort_values(args_vars["sort"], ascending = [False, False])
 
     print("\n{}\n".format(sorted_movies[['title', 'rating', 'avgrating', 'numratings', 'rt_score', 'year', 'runtime', 'genres', 'streams']].to_string()))
 
