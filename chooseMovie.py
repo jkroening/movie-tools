@@ -45,7 +45,7 @@ parser.add_argument("--sort",
                     default = ['rating', 'rt_score'])
 args = parser.parse_args()
 args_vars = vars(parser.parse_args())
-if "sort" in args_vars.keys():
+if "sort" in args_vars.keys() and len(args_vars["sort"]) < 2:
     args_vars["sort"] = [s.strip() for s in args_vars["sort"].split(",")]
 
 ## load database
