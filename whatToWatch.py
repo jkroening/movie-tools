@@ -38,7 +38,8 @@ with open('output/whattowatch.csv', 'wb') as csvfile:
     csvwriter.writerow(['Title', 'Year'])
     for sect in intersect:
         print(sect)
-        [out] = [[i, x['year']] for i, x in lbdict.items() if x['title'] == sect]
+        ## simply take the last item in case of multiple matches
+        out = [[i, x['year']] for i, x in lbdict.items() if x['title'] == sect][-1]
         ## handle duplicate titles by removing
         del lbdict[out[0]]
         csvwriter.writerow([sect, out[1]])
