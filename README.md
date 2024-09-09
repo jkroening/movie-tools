@@ -1,4 +1,4 @@
-# netflix-queue-sorter
+# Netflix Queue Sorter
 A Python script for choosing a movie from your Netflix DVD and Instant (My List) queues.
 
 This sortDVDqueue.py and sortInstantqueue.py scripts are deprecated. Now use chooseMovie.py to add movies to your database and to select a movie and use removeMovie.py to remove a movie from your database after you've watched it.
