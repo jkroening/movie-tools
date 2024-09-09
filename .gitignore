@@ -5,7 +5,5 @@ config/config.csv
 config/queue_heuristics.txt
 databases/movies_db.json
 databases/backup
-input/my_list.html
-input/queue_body.html
-input/saved_queue.html
-input/my_gallery.html
+output/*
+input/*
