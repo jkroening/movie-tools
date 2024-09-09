@@ -15,3 +15,9 @@ Other requirements include:
   - a configuration file located in config/config.csv containing an API key for The Movie Database (see config/config_EXAMPLE.csv)
   - a JSON database skeleton with schema as laid out in databases/movies_db_EXAMPLE.json
   - input HTML files for your DVD queue, Saved Movies queue, and My List (streaming queue) -- see comments in addMovies.py
+
+# whatToWatch
+A Python script that will combine Letterboxd and Movielens to create a csv of your top predicted movies to watch next. You feed the script an html from Letterboxd of your top predicted movies (and available to stream if you so choose) -- it assumes the structure comes from your Watchlist page. You also feed the script a txt file that is the copy-pasted films from your top movies from Movielens. It will then cross-reference the lists to provide a csv of the overlapping films, that can be uploaded to a Letterboxd list.
+
+# siftJustWatch
+A Python script that will search JustWatch for a movie, based on a command line prompt.
