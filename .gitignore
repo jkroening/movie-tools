@@ -5,5 +5,5 @@ config/config.csv
 config/queue_heuristics.txt
 databases/movies_db.json
 databases/backup
-output/*
-input/*
+output
+input
