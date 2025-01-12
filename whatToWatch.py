@@ -14,9 +14,18 @@ lbdict = {}
 lbtxts = []
 for div in lbdivs:
     lbtxts.append(div['data-film-name'])
+    year = None
+    if 'data-film-release-year' in div.attrs:
+        year = div['data-film-release-year']
+    else:
+        imga = div.findNext('img').findNext('a')
+        if 'data-original-title' in imga.attrs:
+            match = re.search(r"\((\d+)\)$", imga['data-original-title'])
+            if match.group(1).isdigit():
+                year = match.group(1)
     lbdict[div['data-film-id']] = {
         'title': div['data-film-name'],
-        'year': div['data-film-release-year']
+        'year': year
     }
 
 ## mlpees = mlsoup.find_all('p', 'title')
