@@ -1,6 +1,20 @@
 import re
 import unicodecsv as csv
+from datetime import datetime
 from bs4 import BeautifulSoup
+import pdb
+
+def extractYear(title):
+    current_year = datetime.now().year
+    matches = list(re.finditer(r'\((\d{4})\)', title))
+    for match in reversed(matches):
+        year = int(match.group(1))
+        if 1880 <= year <= current_year:
+            start, end = match.span()
+            cleaned_title = (title[:start] + title[end:]).strip()
+            cleaned_title = re.sub(r'\s{2,}', ' ', cleaned_title)
+            return cleaned_title, year
+    return title, None
 
 with open('input/letterboxd.html') as lb:
     lbsoup = BeautifulSoup(lb, 'html.parser')
@@ -9,22 +23,22 @@ with open('input/letterboxd.html') as lb:
 with open('input/movielens.txt') as mt: ## copy/paste version
     mtsoup = BeautifulSoup(mt, 'lxml')
 
-lbdivs = lbsoup.find_all('div', attrs = {'data-film-name': True})
+lbdivs = lbsoup.find_all('div', attrs = {'data-item-name': True})
 lbdict = {}
 lbtxts = []
 for div in lbdivs:
-    lbtxts.append(div['data-film-name'])
-    year = None
-    if 'data-film-release-year' in div.attrs:
-        year = div['data-film-release-year']
-    else:
+    name, year = extractYear(div['data-item-name'])
+    lbtxts.append(name)
+    if not year:
         imga = div.findNext('img').findNext('a')
         if 'data-original-title' in imga.attrs:
             match = re.search(r"\((\d+)\)$", imga['data-original-title'])
+            if match is None:
+               match = re.search(r"\((\d+)\)", imga['data-original-title'])
             if match.group(1).isdigit():
                 year = match.group(1)
     lbdict[div['data-film-id']] = {
-        'title': div['data-film-name'],
+        'title': name,
         'year': year
     }
 
@@ -47,9 +61,11 @@ with open('output/whattowatch.csv', 'wb') as csvfile:
     csvwriter.writerow(['Title', 'Year'])
     for sect in intersect:
         print(sect)
-        ## simply take the last item in case of multiple matches
-        out = [[i, x['year']] for i, x in lbdict.items() if x['title'] == sect][-1]
-        ## handle duplicate titles by removing
-        del lbdict[out[0]]
-        csvwriter.writerow([sect, out[1]])
+        entry = [[i, x['year']] for i, x in lbdict.items() if x['title'] == sect]
+        if len(entry):
+            ## simply take the last item in case of multiple matches
+            out = [[i, x['year']] for i, x in lbdict.items() if x['title'] == sect][-1]
+            ## handle duplicate titles by removing
+            del lbdict[out[0]]
+            csvwriter.writerow([sect, out[1]])
 print('\n')
